@@ -43,13 +43,6 @@ test_df = test.reset_index()
 del train_df['index']
 del test_df['index']
 
-train_df = train_df.sample(1000)
-test_df = test_df.sample(1000)
-train_df = train_df.reset_index()
-test_df = test_df.reset_index()
-del train_df['index']
-del test_df['index']
-
 # Configuration Base
 config = Blip2Config.from_pretrained("Salesforce/blip2-opt-2.7b")
 class CFG:
