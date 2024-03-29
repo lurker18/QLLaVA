@@ -67,6 +67,7 @@ class ImageCaptioningDataset(Dataset):
     def __getitem__(self, idx):
         answers = self.answers[idx]
         text = self.questions[idx]
+        prompt = f"Question: {text}. Answer:"
         image = cv2.imread(f"{CFG.image_path}/{self.image_filenames[idx]}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         
@@ -77,7 +78,7 @@ class ImageCaptioningDataset(Dataset):
         
         text_encoding = self.text_processor(
                                             None,
-                                            text,
+                                            prompt,
                                             padding = 'max_length',
                                             truncation = True,
                                             max_length = self.max_length,
