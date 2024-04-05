@@ -52,8 +52,13 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 # SETUP Folders
+<<<<<<< HEAD:Code/Grad_CAM/VGG16-CAM.py
 data_folder = 'C:/Users/Nova18/Desktop/MLLM/data'
 results_folder = 'C:/Users/Nova18/Desktop/MLLM/results'
+=======
+data_folder = 'C:/Users/Hydra18/Desktop/QLLaVA/data'
+results_folder = 'C:/Users/Hydra18/Desktop/QLLaVA/results'
+>>>>>>> 93a9426c04816a7ecf43bb7b99a62443d1ad85c6:Code/VGG16-CAM.py
 # Enter the keyword of the disease:
 types_disease = 'pneumonia'
 
@@ -377,7 +382,11 @@ def test_model(model, test_loader, model_name):
         all_test_outputs.extend(preds.cpu().numpy())
         
     results_df = pd.DataFrame({"True Labels" : all_test_labels, "Predicted Labels" : all_test_outputs})
+<<<<<<< HEAD:Code/Grad_CAM/VGG16-CAM.py
     #results_df.to_csv(f"{results_folder}/CSV/{model_name}.csv", index = False)
+=======
+    results_df.to_csv(f"{results_folder}/CSV/{model_name}.csv", index = False)
+>>>>>>> 93a9426c04816a7ecf43bb7b99a62443d1ad85c6:Code/VGG16-CAM.py
     
     time_end = time.time()
     time_use = time_end - time_start
@@ -436,7 +445,10 @@ plot_graph(train_loss, test_loss, acc_train, acc_test, "VGG16_pretrained")
 
 # Laod the saved parameters
 loaded_vgg16_model = VGG16()
+<<<<<<< HEAD:Code/Grad_CAM/VGG16-CAM.py
 loaded_vgg16_model.to('cuda')
+=======
+>>>>>>> 93a9426c04816a7ecf43bb7b99a62443d1ad85c6:Code/VGG16-CAM.py
 loaded_vgg16_model.load_state_dict(torch.load(results_folder + '/model_weights_vgg16pre.pth'))
 
 features = loaded_vgg16_model.vgg16.features(test_dataset[0][0].unsqueeze(0).to('cuda'))
@@ -520,15 +532,26 @@ def CAM_visual(model, test_dataset, model_name, list_img):
 loaded_vgg16_model = VGG16()
 loaded_vgg16_model.load_state_dict(torch.load(f'{results_folder}/model_weights_vgg16pre.pth'))    
 
+<<<<<<< HEAD:Code/Grad_CAM/VGG16-CAM.py
 # VGG16 without Disease
 moedl_name = 'VGG16_NonDisease'
+=======
+# VGG16
+moedl_name = 'VGG16'
+>>>>>>> 93a9426c04816a7ecf43bb7b99a62443d1ad85c6:Code/VGG16-CAM.py
 list_img = [10, 22, 63, 94]
 CAM_visual(loaded_vgg16_model, test_dataset, model_name, list_img)
 
 
+<<<<<<< HEAD:Code/Grad_CAM/VGG16-CAM.py
 # VGG16 with Disease
 model_name = 'VGG16_Disease'
 list_img = [100, 169, 163, 194]
+=======
+# VGG16w
+model_name = 'VGG16w'
+list_img = [10, 22, 63, 94]
+>>>>>>> 93a9426c04816a7ecf43bb7b99a62443d1ad85c6:Code/VGG16-CAM.py
 CAM_visual(loaded_vgg16_model, test_dataset, model_name, list_img)
 
 loaded_vgg16_model
