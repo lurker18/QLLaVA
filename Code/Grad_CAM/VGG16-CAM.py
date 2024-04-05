@@ -52,10 +52,10 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 # SETUP Folders
-data_folder = 'C:/Users/Hydra18/Desktop/QLLaVA/data'
-results_folder = 'C:/Users/Hydra18/Desktop/QLLaVA/results'
+data_folder = 'C:/Users/Nova18/Desktop/MLLM/data'
+results_folder = 'C:/Users/Nova18/Desktop/MLLM/results'
 # Enter the keyword of the disease:
-types_disease = 'covid19'
+types_disease = 'pneumonia'
 
 # 1. Preprocessing of image type data # 
 class CTScanDataset(Dataset):
@@ -259,7 +259,7 @@ def get_class_labels(types_disease):
         return ["Normal", "Pneumonia"]
     
 #### Train
-def train_and_evaluate(model, train_laoder, test_loader, optimizer, model_name, num_epochs = 10, p = 1):
+def train_and_evaluate(model, train_loader, test_loader, optimizer, model_name, num_epochs = 10, p = 1):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     print(device)
@@ -377,7 +377,7 @@ def test_model(model, test_loader, model_name):
         all_test_outputs.extend(preds.cpu().numpy())
         
     results_df = pd.DataFrame({"True Labels" : all_test_labels, "Predicted Labels" : all_test_outputs})
-    results_df.to_csv(f"{results_folder}/CSV/{model_name}.csv", index = False)
+    #results_df.to_csv(f"{results_folder}/CSV/{model_name}.csv", index = False)
     
     time_end = time.time()
     time_use = time_end - time_start
@@ -419,7 +419,7 @@ class VGG16(nn.Module):
     
 vgg16 = VGG16()
 model_name = "vgg16pre"
-number_epochs = 40
+number_epochs = 30
 p = 1
 optimizer = optim.Adam(vgg16.parameters(), 
                        lr = 0.0001,
@@ -436,8 +436,12 @@ plot_graph(train_loss, test_loss, acc_train, acc_test, "VGG16_pretrained")
 
 # Laod the saved parameters
 loaded_vgg16_model = VGG16()
+loaded_vgg16_model.to('cuda')
 loaded_vgg16_model.load_state_dict(torch.load(results_folder + '/model_weights_vgg16pre.pth'))
 
+features = loaded_vgg16_model.vgg16.features(test_dataset[0][0].unsqueeze(0).to('cuda'))
+features.flatten()
+loaded_vgg16_model.vgg16.classifier(features.flatten())
 
 test_model(loaded_vgg16_model, test_loader,'VGG16 TEST')
 test_model(loaded_vgg16_model, val_loader,'VGG16 VAL')
@@ -516,15 +520,15 @@ def CAM_visual(model, test_dataset, model_name, list_img):
 loaded_vgg16_model = VGG16()
 loaded_vgg16_model.load_state_dict(torch.load(f'{results_folder}/model_weights_vgg16pre.pth'))    
 
-# VGG16
-moedl_name = 'VGG16'
+# VGG16 without Disease
+moedl_name = 'VGG16_NonDisease'
 list_img = [10, 22, 63, 94]
 CAM_visual(loaded_vgg16_model, test_dataset, model_name, list_img)
 
 
-# VGG16w
-model_name = 'VGG16w'
-list_img = [10, 22, 63, 94]
+# VGG16 with Disease
+model_name = 'VGG16_Disease'
+list_img = [100, 169, 163, 194]
 CAM_visual(loaded_vgg16_model, test_dataset, model_name, list_img)
 
 loaded_vgg16_model
