@@ -53,9 +53,9 @@ torch.backends.cudnn.benchmark = False
 
 # SETUP Folders
 data_folder = 'C:/Users/Nova18/Desktop/MLLM/data'
-results_folder = 'C:/Users/Nova18/Desktop/MLLM/results'
+
 # Enter the keyword of the disease:
-types_disease = 'pneumonia'
+types_disease = 'covid19'
 
 # 1. Preprocessing of image type data # 
 class CTScanDataset(Dataset):
@@ -131,6 +131,7 @@ class CTScanDataset(Dataset):
         # Convert to PyTorch tensor
         image = torch.tensor(image, dtype = torch.float32)
         label = torch.tensor(label, dtype = torch.long)
+        
         return image, label
     
     
@@ -259,7 +260,7 @@ def get_class_labels(types_disease):
         return ["Normal", "Pneumonia"]
     
 #### Train
-def train_and_evaluate(model, train_loader, test_loader, optimizer, model_name, num_epochs = 10, p = 1):
+def train_and_evaluate(model, train_laoder, test_loader, optimizer, model_name, num_epochs = 10, p = 1):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     print(device)
@@ -317,7 +318,7 @@ def train_and_evaluate(model, train_loader, test_loader, optimizer, model_name, 
         if average_test_loss < best_test_loss:
             # Save the model weights when the tetst loss is the lowest
             best_test_loss = average_test_loss
-            torch.save(model.state_dict(), f"{results_folder}/model_weights_{model_name}.pth")
+            torch.save(model.state_dict(), f"model_weights_{model_name}.pth")
             
         if epoch % p == 0:
             print(f"Epoch {epoch+1}/{num_epochs}: \t Lr: {current_lr},\t train loss: {average_train_loss:.4f},\t train acc: {train_accuracy:.4f},\t test loss:{average_test_loss:.4f},\t test acc:{test_accuracy:.4f} ")
@@ -356,7 +357,7 @@ def plot_graph(train_loss_history, test_loss_history, acc_train_loss, acc_test_l
     ax2.legend()
     
     plt.tight_layout()
-    plt.savefig(f"{results_folder}/epochs on {model_name}.jpg")
+    plt.savefig(f"epochs on {model_name}.jpg")
     plt.show()
     
 # 5. Model Test
@@ -377,14 +378,14 @@ def test_model(model, test_loader, model_name):
         all_test_outputs.extend(preds.cpu().numpy())
         
     results_df = pd.DataFrame({"True Labels" : all_test_labels, "Predicted Labels" : all_test_outputs})
-    #results_df.to_csv(f"{results_folder}/CSV/{model_name}.csv", index = False)
+    results_df.to_csv(f"{data_folder}/CSV/{model_name}.csv", index = False)
     
     time_end = time.time()
     time_use = time_end - time_start
     report_test = classification_report(all_test_labels, all_test_outputs, target_names = get_class_labels(types_disease))
     conf_matrix = confusion_matrix(all_test_labels, all_test_outputs)
     print(f"Time use : {time_use} sec")
-    print(f"Test Classification Report :\n {report_test}")
+    print(f"Test Classification REport :\n {report_test}")
     print(f"Confusion Matrix:\n{conf_matrix}")
     
     # Plot confusion matrix
@@ -393,7 +394,7 @@ def test_model(model, test_loader, model_name):
     plt.xlabel("Predicted")
     plt.ylabel("True")
     plt.title("Confusion Matrix")
-    plt.savefig(f"{results_folder}/{model_name}.jpg")
+    plt.savefig(f"{data_folder}/CSV/{model_name}.jpg")
     plt.show()
 
 # 6. CNN: VGG16 NET Pretrained
@@ -419,116 +420,19 @@ class VGG16(nn.Module):
     
 vgg16 = VGG16()
 model_name = "vgg16pre"
-number_epochs = 30
+number_epochs = 40
 p = 1
-optimizer = optim.Adam(vgg16.parameters(), 
-                       lr = 0.0001,
-                       weight_decay = 0.001)
-model_VGG16, train_loss, test_loss, acc_train, acc_test, time_use = train_and_evaluate(vgg16, 
-                                                                                       train_loader, 
-                                                                                       test_loader, 
-                                                                                       optimizer = optimizer,
-                                                                                       model_name = model_name,
-                                                                                       num_epochs = number_epochs, 
-                                                                                       p = p)
+optimizer = optim.Adam(vgg16.parameters(), lr = 0.0001, weight_decay = 0.001)
+model_VGG16, train_loss, test_loss, acc_train, acc_test, time_use = train_and_evaluate(vgg16, train_loader, test_loader, optimizer = optimizer, model_name = model_name, num_epochs = number_epochs, p = p)
 
 plot_graph(train_loss, test_loss, acc_train, acc_test, "VGG16_pretrained")
 
 # Laod the saved parameters
 loaded_vgg16_model = VGG16()
-loaded_vgg16_model.to('cuda')
-loaded_vgg16_model.load_state_dict(torch.load(results_folder + '/model_weights_vgg16pre.pth'))
+loaded_vgg16_model.load_state_dict(torch.load(data_folder + '/CSV/model_weights_vgg16pre.pth'))
 
-features = loaded_vgg16_model.vgg16.features(test_dataset[0][0].unsqueeze(0).to('cuda'))
-features.flatten()
-loaded_vgg16_model.vgg16.classifier(features.flatten())
 
 test_model(loaded_vgg16_model, test_loader,'VGG16 TEST')
 test_model(loaded_vgg16_model, val_loader,'VGG16 VAL')
 
 # 7. CAM: Class Activate Map:
-def CAM_ALG(model, img):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-    
-    # Change img from test_dataset to 4D
-    img = img.unsqueeze(0) # torch.Size([1, 3, 225, 225])
-    img = img.to(device)
-    
-    # output of features and predict label
-    model.eval()
-    features = model.vgg16.features(img) # torch.Size([1, 256, 6, 6])
-    output = model.vgg16.classifier(features.flatten())
-    print(output)
-    
-    def extract(g):
-        global features_grad
-        features_grad = g
-        
-    pred_label = torch.argmax(output).item()
-    pred_class = output[pred_label]
-    
-    features.register_hook(extract)
-    pred_class.backward()
-    
-    grads = features_grad
-    
-    GAP_features = torch.nn.functional.adaptive_avg_pool2d(grads, (1, 1))
-    
-    Weighted_sum = features * GAP_features
-    Weighted_sum = Weighted_sum.squeeze().cpu().detach().numpy()
-    cam = np.mean(Weighted_sum, axis = 0)
-    
-    cam = np.maximum(cam, 0)
-
-    cam /= np.maximum(np.max(cam), 0.00000000001)
-    
-    # Resize the CAM to the original image size and Min-Max Normalization
-    cam = cv2.resize(cam, (225, 225))
-    
-    # Apply heatmap to the original image
-    heatmap = cv2.applyColorMap(np.uint8(255 * (1 - cam)), cv2.COLORMAP_JET)
-    img = np.transpose(img.squeeze().cpu().numpy(), (1, 2, 0))
-    heatmap = heatmap / 255 # to normalize
-    superimposed_img = heatmap * 0.4 + img
-    
-    return superimposed_img, pred_label
-
-def CAM_visual(model, test_dataset, model_name, list_img):
-    f, ax = plt.subplots(2, 4, figsize = (13, 8))
-    
-    for i, img_id in enumerate(list_img):
-        img, label = test_dataset[img_id]
-        
-        image = img.permute(1, 2, 0)
-        ax[0, i].imshow(image)
-        ax[0, i].set_title(f"Label: {get_classlabels(types_disease, label.item())}")
-        
-        # img with CAM
-        superimposed_img, predict_label = CAM_ALG(model, img)
-        cas = ax[1, i].imshow(superimposed_img) 
-        
-        ax[1, i].set_title(f"Predict: {get_classlabels(types_disease, predict_label)}")
-        
-    plt.tight_layout()
-    plt.subplots_adjust(top = 0.93)
-    plt.suptitle(f"CAM visual On {model_name} model", fontsize = 16)
-    plt.savefig(f"{results_folder}/{model_name}compareC.jpg")
-    plt.show()
-    
-# Load the saved parameters
-loaded_vgg16_model = VGG16()
-loaded_vgg16_model.load_state_dict(torch.load(f'{results_folder}/model_weights_vgg16pre.pth'))    
-
-# VGG16 without Disease
-moedl_name = 'VGG16_NonDisease'
-list_img = [10, 22, 63, 94]
-CAM_visual(loaded_vgg16_model, test_dataset, model_name, list_img)
-
-
-# VGG16 with Disease
-model_name = 'VGG16_Disease'
-list_img = [100, 169, 163, 194]
-CAM_visual(loaded_vgg16_model, test_dataset, model_name, list_img)
-
-loaded_vgg16_model

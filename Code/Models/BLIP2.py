@@ -46,7 +46,7 @@ del test_df['index']
 # Configuration Base
 config = Blip2Config.from_pretrained("Salesforce/blip2-opt-2.7b")
 class CFG:
-    image_path = data_folder + 'MSCOCO/train'
+    image_path = data_folder + 'MSCOCO/train2014'
 
 # 2. Create Dataset
 class ImageCaptioningDataset(Dataset):
@@ -118,7 +118,7 @@ def collate_fn(batch):
 
 image_processor = AutoProcessor.from_pretrained("Salesforce/blip2-opt-2.7b")
 text_processor = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
-model = Blip2ForConditionalGeneration.from_pretrained("Salesforce/blip2-opt-2.7b", device_map = "auto", load_in_8bit = True)
+model = Blip2ForConditionalGeneration.from_pretrained("ybelkada/blip2-opt-2.7b-fp16-sharded", device_map = "auto", load_in_8bit = True)
 
 # 3. Set LoRA configuration
 config = LoraConfig(
