@@ -5,6 +5,8 @@ Created on Thu Mar 28 21:05:49 2024
 @author: Nova18
 """
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import cv2
 import numpy as np
 from datasets import load_dataset
@@ -21,7 +23,7 @@ from IPython.display import display
 
 from utils import data_preprocessing
 
-data_folder = 'C:/Users/Nova18/Desktop/MLLM/data/'
+data_folder = '/home/lurker18/Desktop/QLLaVA/data/'
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # 1. Load Dataset
@@ -43,10 +45,15 @@ test_df = test.reset_index()
 del train_df['index']
 del test_df['index']
 
+train_df = train_df.sample(5000).reset_index()
+test_df = test_df.sample(5000).reset_index()
+del train_df['index']
+del test_df['index']
+
 # Configuration Base
 config = Blip2Config.from_pretrained("Salesforce/blip2-opt-2.7b")
 class CFG:
-    image_path = data_folder + 'MSCOCO/train2014'
+    image_path = data_folder + 'MSCOCO/train'
 
 # 2. Create Dataset
 class ImageCaptioningDataset(Dataset):
@@ -66,8 +73,7 @@ class ImageCaptioningDataset(Dataset):
     
     def __getitem__(self, idx):
         answers = self.answers[idx]
-        text = self.questions[idx]
-        prompt = f"Question: {text}. Answer:"
+        question = self.questions[idx]
         image = cv2.imread(f"{CFG.image_path}/{self.image_filenames[idx]}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         
@@ -78,7 +84,7 @@ class ImageCaptioningDataset(Dataset):
         
         text_encoding = self.text_processor(
                                             None,
-                                            prompt,
+                                            question,
                                             padding = 'max_length',
                                             truncation = True,
                                             max_length = self.max_length,
@@ -116,9 +122,9 @@ def collate_fn(batch):
     
     return batch
 
-image_processor = AutoProcessor.from_pretrained("Salesforce/blip2-opt-2.7b")
+image_processor = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
 text_processor = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
-model = Blip2ForConditionalGeneration.from_pretrained("ybelkada/blip2-opt-2.7b-fp16-sharded", device_map = "auto", load_in_8bit = True)
+model = Blip2ForConditionalGeneration.from_pretrained("Salesforce/blip2-opt-2.7b", device_map = "auto", load_in_8bit = True)
 
 # 3. Set LoRA configuration
 config = LoraConfig(
@@ -135,13 +141,13 @@ model.print_trainable_parameters()
 train_dataset = ImageCaptioningDataset(train_df, text_processor, image_processor)
 train_dataloader = DataLoader(train_dataset, 
                               shuffle = False, 
-                              batch_size = 64, 
+                              batch_size = 8, 
                               collate_fn = collate_fn)
 
 val_dataset = ImageCaptioningDataset(test_df, text_processor, image_processor)
 val_dataloader = DataLoader(val_dataset, 
                               shuffle = False, 
-                              batch_size = 64, 
+                              batch_size = 8, 
                               collate_fn = collate_fn)
 
 batch = next(iter(train_dataloader))
@@ -158,7 +164,7 @@ batch_idx = 1
 
 unnormalized_image = (batch["pixel_values"][batch_idx].cpu().numpy() * np.array(image_std)[:, None, None]) + np.array(image_mean)[:, None, None]
 unnormalized_image = np.moveaxis(unnormalized_image, 0, -1)
-unnormalized_image =(unnormalized_image * 255).astype(np.uint8)
+unnormalized_image = (unnormalized_image * 255).astype(np.uint8)
 print("Question: ", text_processor.decode(batch["input_ids"][batch_idx]))
 print("Answer: ", text_processor.decode(batch["labels"][batch_idx]))
 plt.imshow(Image.fromarray(unnormalized_image))
@@ -182,16 +188,26 @@ for epoch in range(5):
         optimizer.zero_grad()
     print("Loss:", sum(total_loss))
 
+
 # 6. Inference
 # add batch dimension + move to GPU
-for x in range(10):
+for x in range(2):
     sample = val_dataset[x]
     print("Question: ", text_processor.decode(sample['input_ids'], skip_special_tokens = True))
     sample = {k: v.unsqueeze(0).to(device) for k,v in sample.items()}
-    
+   
     # Forward pass
     outputs = model.generate(pixel_values = sample['pixel_values'],
-                             input_ids = sample['input_ids'])
+                             input_ids = sample['input_ids'],
+                             do_sample = True,
+                             num_beams = 5, 
+                             max_length = 32,
+                             no_repeat_ngram_size = 2,
+                             top_k = 10, 
+                             top_p = 0.92,
+                             early_stopping = True,
+                             repetition_penalty = 10.0,
+                             max_new_tokens = 64)
     print("Predicted Answer: ", text_processor.decode(outputs[0], skip_special_tokens = True))
     print("Actual Answer: ", text_processor.decode(sample['labels'][0], skip_special_tokens = True))
     #########################################################################
