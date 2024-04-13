@@ -10,14 +10,15 @@ import os
 from typing import Any
 
 import fire
-import deepspeed
+#import deepspeed
 import torch
 import yaml
 
 from transformers import TrainingArguments
 
-from Models.utils import (apply_lora_model, load_model, load_pretrained_weight, set_trainable_params, unload_and_merge_lora)
-from Models.vision_language_trainer import VisionLanguageTrainer as Trainer
+from Code.datasets.utils import get_dataset
+from Code.Models.utils import (apply_lora_model, load_model, load_pretrained_weight, set_trainable_params, unload_and_merge_lora)
+from Code.Models.vision_language_trainer import VisionLanguageTrainer as Trainer
 
 GitLLMForCausalLM = Any
 
@@ -29,11 +30,11 @@ def main(config_file: str, local_rank: int = 0):
         
     if os.environ.get("WANDB_NAME") is not None:
         training_config["output_dir"] = os.path.join(
-            training_config["output_dir"], os.environ["WAND_NAME"]
+            training_config["output_dir"], os.environ["WANDB_NAME"]
         )
         
     # distributed learning
-    deepspeed.init_distributed()
+    #deepspeed.init_distributed()
     
     # config to what to freeze and finetune
     keys_to_finetune = config["model_config"]["keys_to_finetune"]
@@ -75,9 +76,9 @@ def main(config_file: str, local_rank: int = 0):
         trainer.train()
         
     # Save the final checkpooint
-    if os.environ.get("WAND_NAME") is not None:
+    if os.environ.get("WANDB_NAME") is not None:
         final_save_path = os.path.join(
-            training_config["output_dir"], os.environ["WAND_NAME"] + "_final"
+            training_config["output_dir"], os.environ["WANDB_NAME"] + "_final"
         )
     else:
         final_save_path = os.path.join(training_config["output_dir"], "final_model")
