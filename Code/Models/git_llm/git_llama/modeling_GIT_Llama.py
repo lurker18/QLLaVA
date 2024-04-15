@@ -17,7 +17,7 @@ from transformers import (CLIPVisionConfig,
                           CLIPVisionModel, 
                           LlamaConfig, 
                           LlamaForCausalLM, 
-                          LlamaModel)
+                          LlamaModel,)
 from transformers.modeling_outputs import (BaseModelOutputWithPast,
                                            BaseModelOutputWithPooling,
                                            CausalLMOutputWithPast,)

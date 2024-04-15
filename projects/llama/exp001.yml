@@ -12,6 +12,7 @@ training_config:
   eval_steps: 4000
   save_steps: 4000
   save_total_limit: 1
+  deepspeed: ./configs/deepspeed/ds_config_zero1.json
   output_dir: ./output/
   report_to: "wandb"
 
