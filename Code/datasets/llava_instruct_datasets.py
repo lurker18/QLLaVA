@@ -130,7 +130,7 @@ class LlavaInstructDataset(BaseDataset):
             agent = c["from"]
             if agent == "gpt":
                 agent_prompt = ""
-                nex_agent_prompt = f"{self.processor.tokenizer.eos_token}\n"
+                next_agent_prompt = f"{self.processor.tokenizer.eos_token}\n"
             elif agent == "human":
                 agent_prompt = "##human: "
                 next_agent_prompt = "\n##gpt: "
@@ -162,7 +162,7 @@ class LlavaInstructDataset(BaseDataset):
             tokenized_prompt = torch.cat(
                 [
                     tokenized_prompt,
-                    torch.tensor([self.processor.tokenizer.pad_token_id] * pad_length)
+                    torch.tensor([self.processor.tokenizer.pad_token_id] * pad_length),
                 ],
                 dim = -1,
             )

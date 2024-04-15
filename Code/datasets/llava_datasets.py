@@ -117,7 +117,7 @@ class LlavaDataset(BaseDataset):
         for c in row["conversations"]:
             agent = c["from"]
             message = c[language]
-            prompt += f"##{agent}: {message}\n:"
+            prompt += f"##{agent}: {message}\n"
             
         tokenized = self.tokenize(prompt)
         tokenized_prompt = tokenized["input_ids"][0]

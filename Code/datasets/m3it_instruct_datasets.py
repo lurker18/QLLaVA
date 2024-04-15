@@ -34,7 +34,7 @@ class M3ITInstructDataset(ResilientDataset):
         self.loaded_dataset = loaded_dataset
         self.max_length = max_length
         self.processor = processor
-        self.is_inference_ = is_inference
+        self.is_inference = is_inference
         
         
     @classmethod
