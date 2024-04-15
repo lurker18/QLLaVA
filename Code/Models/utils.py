@@ -14,11 +14,11 @@ import torch
 from peft.mapping import get_peft_model
 from peft.tuners.lora import LoraConfig
 
-GitLLMForCaualLM = Any
+GitLLMForCausalLM = Any
 
 def load_model(
         model_config: Dict,
-    ) -> GitLLMForCaualLM:
+    ) -> GitLLMForCausalLM:
     """Loading a V&L model depending on configs"""
     
     model_type = model_config['model_type']
@@ -36,11 +36,11 @@ def load_model(
             from .git_llm.git_llama import GitLlamaConfig, GitLlamaForCausalLM
             
             git_config = GitLlamaConfig.from_pretrained(language_model)
-            git_config.set_visiion_configs(
+            git_config.set_vision_configs(
                 num_image_with_embedding = num_image_with_embedding,
                 vision_model_name = model_config["vision_model_name"],
             )
-            model = GitLLMForCaualLM.from_pretrained(
+            model = GitLlamaForCausalLM.from_pretrained(
                 language_model, config = git_config, torch_dtype = torch_dtype
             )
             
@@ -48,7 +48,7 @@ def load_model(
             raise ValueError(f"{model_type} is not supported.")
         return model
     
-def load_pretrained_weight(model: GitLLMForCaualLM, weight_path : str):
+def load_pretrained_weight(model: GitLLMForCausalLM, weight_path : str):
     weight = {}
     weight_path = glob.glob(f"{weight_path}/pytorch*.bin")
     for w in weight_path:
@@ -57,7 +57,7 @@ def load_pretrained_weight(model: GitLLMForCaualLM, weight_path : str):
     model.load_state_dict(weight, strict = False)
     
     
-def apply_lora_model(model: GitLLMForCaualLM, model_config: Dict) -> GitLLMForCaualLM:
+def apply_lora_model(model: GitLLMForCausalLM, model_config: Dict) -> GitLLMForCausalLM:
     """Apply LoRA"""
     model_type = model_config["model_type"]
     peft_config = LoraConfig(**model_config["lora"])
@@ -71,7 +71,7 @@ def apply_lora_model(model: GitLLMForCaualLM, model_config: Dict) -> GitLLMForCa
     return model
 
 
-def unload_and_merge_lora(model: GitLLMForCaualLM, model_config: Dict) -> GitLLMForCaualLM:
+def unload_and_merge_lora(model: GitLLMForCausalLM, model_config: Dict) -> GitLLMForCausalLM:
     """Unload and merge LoRA"""
     model_type = model_config["model_type"]
     if model_type == "git_llm":
@@ -81,7 +81,7 @@ def unload_and_merge_lora(model: GitLLMForCaualLM, model_config: Dict) -> GitLLM
     return model
 
 def set_trainable_params(
-        model: GitLLMForCaualLM,
+        model: GitLLMForCausalLM,
         keys_to_finetune: List[str],
         keys_to_freeze: List[str],
         train_lora: bool = True,
