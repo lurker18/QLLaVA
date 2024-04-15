@@ -18,6 +18,6 @@ class VisionLanguageTrainer(Trainer):
             signature = inspect.signature(self.model.forward)
             self._signature_columns = list(signature.parameters.keys())
             # Labels may be named label or label_ids, the default data collator handles that.
-            self._signature_columns += list(set(["labels", "label_ids"] + self.label_names))
+            self._signature_columns += list(set(["label", "label_ids"] + self.label_names))
             # Add pixel_values to signature columns
             self._signature_columns += ["pixel_values"]

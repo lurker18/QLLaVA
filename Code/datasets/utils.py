@@ -13,7 +13,7 @@ import pandas as pd
 import yaml
 from torch.utils.data import ConcatDataset, Dataset
 
-from Code.Models.prepare_preprocessors import get_processor
+from Code.Models.prepare_processors import get_processor
 from Code.datasets.llava_datasets import LlavaDataset
 from Code.datasets.llava_instruct_datasets import LlavaInstructDataset
 from Code.datasets.m3it_datasets import M3ITDataset

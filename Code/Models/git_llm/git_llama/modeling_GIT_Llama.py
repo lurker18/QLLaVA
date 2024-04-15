@@ -42,16 +42,16 @@ class GitLlamaConfig(LlamaConfig):
             self.num_image_with_embedding = None
         
     def set_vision_configs(
-            self,
-            num_image_with_embedding: int = 1,
-            vision_model_name: Union[str, None] = None,
-            **kwargs
+        self,
+        num_image_with_embedding: int = 1,
+        vision_model_name: Union[str, None] = None,
+        **kwargs
     ):
-            self.num_image_with_embedding = (
-                None if num_image_with_embedding == 1 else num_image_with_embedding
-            )
-            self.vision_model_name = vision_model_name
-            self.vision_config = CLIPVisionConfig.from_pretrained(vision_model_name)
+        self.num_image_with_embedding = (
+           None if num_image_with_embedding == 1 else num_image_with_embedding
+        )
+        self.vision_model_name = vision_model_name
+        self.vision_config = CLIPVisionConfig.from_pretrained(vision_model_name)
             
     def to_dict(self):
         """
@@ -262,11 +262,11 @@ class GitLlamaModel(LlamaModel):
             projected_visual_features = self.visual_projection(visual_features)
             
         if inputs_embeds is None:
-            inputs_embds = self.embed_tokens(input_ids)
+            inputs_embeds = self.embed_tokens(input_ids)
             
         # Embed Positions
         if attention_mask is None:
-            attention_maks = torch.ones(
+            attention_mask = torch.ones(
                 (batch_size, seq_length_with_past), dtype = torch.bool, device = inputs_embeds.device
             )
         

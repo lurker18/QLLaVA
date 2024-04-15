@@ -34,7 +34,7 @@ class M3ITDataset(ResilientDataset):
         self.loaded_dataset = loaded_dataset
         self.max_length = max_length
         self.processor = processor
-        self.is_inference_ = is_inference
+        self.is_inference = is_inference
         
         
     @classmethod
@@ -46,7 +46,7 @@ class M3ITDataset(ResilientDataset):
                is_inference: bool = False,
     ):
         dataset_list = [
-            datasets.load_dataset("MMInstruction/M3IT", i, num_proc = 16, cache_dir = 'F:/HuggingFace/datasets')
+            datasets.load_dataset("MMInstruction/M3IT", i, num_proc = 16, cache_dir = '/home/lurker18/HuggingFace/datasets')
             for i in dataset_config["dataset_names"]
         ]
                                   
@@ -91,7 +91,7 @@ class M3ITDataset(ResilientDataset):
         tokenized = self.tokenize(prompt)
         tokenized_prompt = tokenized["input_ids"][0]
         labels = torch.full_like(tokenized_prompt, IGNORE_INDEX)
-        prompt_attn_mask = tokenized("attention_mask")[0]
+        prompt_attn_mask = tokenized["attention_mask"][0]
         
         index_ignore_loss = prompt_attn_mask.sum().item() + 1
         labels[:index_ignore_loss] = tokenized_prompt[:index_ignore_loss]

@@ -10,7 +10,7 @@ import os
 from typing import Any
 
 import fire
-#import deepspeed
+import deepspeed
 import torch
 import yaml
 
@@ -34,7 +34,7 @@ def main(config_file: str, local_rank: int = 0):
         )
         
     # distributed learning
-    #deepspeed.init_distributed()
+    deepspeed.init_distributed()
     
     # config to what to freeze and finetune
     keys_to_finetune = config["model_config"]["keys_to_finetune"]

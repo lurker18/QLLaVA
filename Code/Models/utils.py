@@ -33,7 +33,7 @@ def load_model(
         
     if model_type == "git_llm":
         if "Llama" in language_model:
-            from .git_llm.git_llama import GitLlamaConfig, GitLlamaForCausalLM
+            from Code.Models.git_llm.git_llama import GitLlamaConfig, GitLlamaForCausalLM
             
             git_config = GitLlamaConfig.from_pretrained(language_model)
             git_config.set_vision_configs(
@@ -93,7 +93,7 @@ def set_trainable_params(
     if len(keys_to_freeze) > 0 and len(keys_to_finetune) == 0:
         for name, p in model.named_parameters():
             if train_lora and "lora" in name:
-                p.requres_grad = True
+                p.requires_grad = True
                 trainable_list.append(name)
                 
             elif np.any([k in name for k in keys_to_freeze]):
@@ -110,13 +110,13 @@ def set_trainable_params(
                 p.requires_grad = True
                 trainable_list.append(name)
             elif np.any([k in name for k in keys_to_finetune]):
-                p.requires = True
+                p.requires_grad = True
                 trainable_list.append(name)
             else:
                 p.requires_grad = False
                 untrainable_list.append(name)
                 
     else:
-        raise ValueError("eighter keys_to_freeze or keys_to_finetune should be specified")
+        raise ValueError("either keys_to_freeze or keys_to_finetune should be specified")
     
     return trainable_list, untrainable_list
