@@ -32,7 +32,19 @@ def load_model(
         torch_dtype = torch.float32
         
     if model_type == "git_llm":
-        if "Llama" in language_model:
+        if "opt" in language_model:
+            from Code.Models.git_llm.git_opt import GitOPTConfig, GitOPTForCausalLM
+
+            git_config = GitOPTConfig.from_pretrained(language_model)
+            git_config.set_vision_configs(
+                num_image_with_embedding = num_image_with_embedding,
+                vision_model_name = model_config["vision_model_name"],
+            )
+            model = GitOPTForCausalLM.from_pretrained(
+                language_model, config = git_config, torch_dtype = torch_dtype
+            )
+
+        elif "Llama" in language_model:
             from Code.Models.git_llm.git_llama import GitLlamaConfig, GitLlamaForCausalLM
             
             git_config = GitLlamaConfig.from_pretrained(language_model)

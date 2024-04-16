@@ -16,7 +16,13 @@ from transformers import (
     )
 
 def get_tokenizer(language_model_name: str) -> "Tokenizer":
-    if "Llama" in language_model_name:
+    if "opt" in language_model_name:
+        tokenizer = AutoTokenizer.from_pretrained(
+            language_model_name, padding_size = "right", use_fast = False
+        )
+        return tokenizer
+    
+    elif "Llama" in language_model_name:
         tokenizer = AutoTokenizer.from_pretrained(
             language_model_name, padding_side = "right", use_fast = False
         )
