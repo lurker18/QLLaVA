@@ -46,7 +46,7 @@ class M3ITDataset(ResilientDataset):
                is_inference: bool = False,
     ):
         dataset_list = [
-            datasets.load_dataset("MMInstruction/M3IT", i, num_proc = 16, cache_dir = '/home/lurker18/HuggingFace/datasets')
+            datasets.load_dataset("MMInstruction/M3IT", i, num_proc = 0, cache_dir = '/home/lurker18/HuggingFace/datasets')
             for i in dataset_config["dataset_names"]
         ]
                                   
