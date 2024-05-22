@@ -55,6 +55,18 @@ def load_model(
             model = GitLlamaForCausalLM.from_pretrained(
                 language_model, config = git_config, torch_dtype = torch_dtype
             )
+        
+        elif "mpt" in language_model:
+            from Code.Models.git_llm.git_mpt import GitMptConfig, GitMptForCausalLM
+
+            git_config = GitMptConfig.from_pretrained(language_model)
+            git_config.set_vision_configs(
+                num_image_with_embedding = num_image_with_embedding,
+                vision_model_name = model_config["vision_model_name"],
+            )
+            model = GitMptForCausalLM.from_pretrained(
+                language_model, config = git_config, torch_dtype = torch_dtype
+            )
             
         else:
             raise ValueError(f"{model_type} is not supported.")
